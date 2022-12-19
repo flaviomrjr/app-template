@@ -1,0 +1,59 @@
+name: "2 - [DEV] Test and Build"
+
+on:
+  pull_request:
+    types:
+      - "closed"
+    branches:
+      - "develop"
+  
+jobs:
+  unit-tests:
+    if: github.event.pull_request.merged == true
+    uses: ./.github/workflows/test.yaml
+    with:
+      environment: dev
+      node-version: '15.x'
+    secrets: inherit
+  
+  code-scan:
+    uses: ./.github/workflows/sonarqube.yaml
+    needs:
+      - unit-tests
+    with:
+      environment: dev
+    secrets: inherit
+
+  publish-docker:
+    uses: ./.github/workflows/build.yaml
+    needs:
+      - unit-tests
+      - code-scan
+    with:
+      environment: dev
+      run-environment: development
+      aws-account: '0000000000'
+      region: us-east-1
+    secrets: inherit
+
+  update-image-tag:
+    uses: ./.github/workflows/update-tag.yaml
+    needs:
+      - unit-tests
+      - code-scan
+      - publish-docker
+    with:
+      environment: dev
+      image-tag: ${{ needs.publish-docker.outputs.image-tag }}
+    secrets: inherit
+
+  open-pr-to-main:
+    uses: ./.github/workflows/create-pull-request.yaml
+    needs:
+      - unit-tests
+      - code-scan
+      - publish-docker
+      - update-image-tag
+    with:
+      target-branch: main
+    secrets: inherit

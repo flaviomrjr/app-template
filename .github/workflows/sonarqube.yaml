@@ -1,0 +1,40 @@
+name: SonarQube Code Scan
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Set environment'
+        required: true
+        type: string
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  sonarqube:
+    name: Scan
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+    - name: Checkout 
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set Tag  
+      run: |
+        echo "image_tag=${{ inputs.environment }}-$(git log | head -n 1 | cut -c8-15)" >> $GITHUB_ENV
+        source $GITHUB_ENV
+        echo "Image Tag: $image_tag"
+        echo "::set-output name=tag-image::$image_tag"
+      id: tag-image
+    
+    - name: Set Project Version
+      run: |
+        echo -e '\nsonar.projectVersion=${{ env.image_tag }}' >> sonar-project.properties
+  #- name: SonarQube Scan
+    #  uses: sonarsource/sonarqube-scan-action@master
+    #  env:
+    #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #    SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

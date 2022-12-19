@@ -1,0 +1,49 @@
+name: "3 - [PROD] Test and Build"
+
+on:
+  pull_request:
+    types:
+      - "closed"
+    branches:
+      - "main"
+      - "master"
+  
+jobs:
+  unit-tests:
+    if: github.event.pull_request.merged == true
+    uses: ./.github/workflows/test.yaml
+    with:
+      environment: prod
+      node-version: '15.x'
+    secrets: inherit
+  
+  code-scan:
+    uses: ./.github/workflows/sonarqube.yaml
+    needs:
+      - unit-tests
+    with:
+      environment: prod
+    secrets: inherit
+
+  publish-docker:
+    uses: ./.github/workflows/build.yaml
+    needs:
+      - unit-tests
+      - code-scan
+    with:
+      environment: prod
+      run-environment: production
+      aws-account: '000000000000'
+      region: sa-east-1
+    secrets: inherit
+
+  update-image-tag:
+    uses: ./.github/workflows/update-tag.yaml
+    needs:
+      - unit-tests
+      - code-scan
+      - publish-docker
+    with:
+      environment: prod
+      image-tag: ${{ needs.publish-docker.outputs.image-tag }}
+    secrets: inherit

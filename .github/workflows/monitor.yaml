@@ -1,0 +1,78 @@
+name: New Relic Monitor
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: 'Application'
+        required: true
+        type: string
+      job-name:
+        description: 'Job name to monitor'
+        required: true
+        type: string
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  monitor:
+    name: Monitor Execution Time
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Get Job ID
+        run: |
+          echo "job_id=$(curl \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ github.token }}"\
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .id)" >> $GITHUB_ENV
+
+          source $GITHUB_ENV
+          echo "Job ID: $job_id"
+          
+      - name: Get Job Execution time
+        run: |
+          echo "duration_ms=$(curl \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ github.token }}"\
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/timing | jq -c '.billable.${{ inputs.runs-on }}.job_runs[] | select(.job_id == ${{ env.job_id }})' | jq .duration_ms)" >> $GITHUB_ENV
+
+          source $GITHUB_ENV
+          echo "Execution time: $duration_ms"
+
+      - name: Convert Execution time from milliseconds to ..
+        run: |
+          if [ ${{ env.duration_ms }}" == 0 ]; then 
+            echo "duration_ms=130" >> $GITHUB_ENV
+            source $GITHUB_ENV
+            echo "Duration time: $duration_ms"
+          fi
+
+          duration_sec=$duration_ms/1000
+
+          echo "duration=$(local totalSeconds=$duration_sec;
+          local seconds=$((totalSeconds%60));
+          local minutes=$((totalSeconds/60%60));
+          local hours=$((totalSeconds/60/60%24));
+          local days=$((totalSeconds/60/60/24));
+          (( $days > 0 )) && printf '%dd'$days;
+          (( $hours > 0 )) && printf '%dh' $hours;
+          (( $minutes > 0 )) && printf '%dm' $minutes;
+          (( $days > 0 || $hours > 0 || $minutes > 0 )) && printf '%ds' $seconds;)" >> $GITHUB_ENV
+
+          source $GITHUB_ENV
+          echo "Execution time converted: $duration"
+
+      - name: Sends unit-tests execution time
+        id: newrelic-metric
+        uses: barecheck/newrelic-metric-action@v0.2-beta.1
+        with:
+          insertApiKey: ${{ secrets.NEW_RELIC_INSERT_API_KEY }}
+          accountId: ${{ secrets.NEW_RELIC_ACCOUNT_ID }}
+          region: US
+          application: ${{ inputs.app }}
+          metricName: ${{ inputs.job-name }}
+          metricValue: ${{ env.duration }}

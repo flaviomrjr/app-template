@@ -1,0 +1,38 @@
+name: "4 - [FIX] Test and Build"
+
+on:
+  push:
+    branches:
+      - "hotfix**"
+  
+jobs:
+  unit-tests:
+    uses: ./.github/workflows/test.yaml
+    with:
+      environment: prod
+      node-version: '15.x'
+    secrets: inherit
+  
+  code-scan:
+    uses: ./.github/workflows/sonarqube.yaml
+    needs:
+      - unit-tests
+    with:
+      environment: hotfix
+    secrets: inherit
+
+  open-pr-to-main:
+    uses: ./.github/workflows/create-pull-request.yaml
+    needs:
+      - code-scan
+    with:
+      target-branch: main
+    secrets: inherit
+
+  open-pr-to-develop:
+    uses: ./.github/workflows/create-pull-request.yaml
+    needs:
+      - code-scan
+    with:
+      target-branch: develop
+    secrets: inherit

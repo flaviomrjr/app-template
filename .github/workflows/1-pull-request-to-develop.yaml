@@ -1,0 +1,40 @@
+name: "1 - [FEAT] PR"
+
+on:
+  push:
+    branches:
+      - "feature**"
+  
+jobs:
+  unit-tests:
+    uses: ./.github/workflows/test.yaml
+    with:
+      environment: dev
+      node-version: '16.x'
+    secrets: inherit
+
+  code-scan:
+    uses: ./.github/workflows/sonarqube.yaml
+    needs:
+      - unit-tests
+    with:
+      environment: feature
+    secrets: inherit
+#
+  #open-pr-to-develop:
+  #  uses: ./.github/workflows/create-pull-request.yaml
+  #  needs:
+  #    - unit-tests
+  #    - code-scan
+  #  with:
+  #    target-branch: develop
+  #  secrets: inherit
+
+  monitor:
+    uses: ./.github/workflows/monitor.yaml
+    needs:
+      - code-scan
+    with:
+      app: app-template
+      job-name: code-scan
+    secrets: inherit
