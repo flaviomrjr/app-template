@@ -44,9 +44,9 @@ jobs:
       - name: Convert Execution time from milliseconds to ..
         run: |
           if [ ${{ env.duration_ms }} == 0 ]; then 
-            echo "duration_ms=130" >> $GITHUB_ENV
+            echo "duration_ms=130000" >> $GITHUB_ENV
             source $GITHUB_ENV
-            echo "Duration time: $duration_ms"
+            echo "Duration MS: $duration_ms"
           fi
 
           duration_sec=$duration_ms/1000
