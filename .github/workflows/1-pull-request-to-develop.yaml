@@ -15,7 +15,7 @@ jobs:
 
   code-scan:
     uses: ./.github/workflows/sonarqube.yaml
-    needs:
+    #needs:
     #  - unit-tests
     with:
       environment: feature
