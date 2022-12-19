@@ -23,12 +23,11 @@ jobs:
     steps:
       - name: Get Job ID
         run: |
-          curl -o get_job_id \
+          echo "job_id=$(curl \
           --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
           --header "Authorization: Bearer ${{ github.token }}" \
-          --header "content-type: application/json"
-          echo "job_id=$(cat get_job_id | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .id)" >> $GITHUB_ENV
-          
+          --header "content-type: application/json" | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .id)" >> $GITHUB_ENV 
+      
           source $GITHUB_ENV
           echo "Job ID: $job_id"
   
