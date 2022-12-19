@@ -36,5 +36,5 @@ jobs:
       - code-scan
     with:
       app: app-template
-      job-name: code-scan
+      job-name: code-scan / Scan
     secrets: inherit
