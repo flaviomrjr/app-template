@@ -65,7 +65,7 @@ jobs:
           source $GITHUB_ENV
           echo "Execution time converted: $duration"
 
-      - name: Sends unit-tests execution time
+      - name: Sends execution time
         id: newrelic-metric
         uses: barecheck/newrelic-metric-action@v0.2-beta.1
         with:
