@@ -36,7 +36,7 @@ jobs:
           echo "duration_ms=$(curl \
           --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/timing \
           --header "Authorization: Bearer ${{ github.token }}" \
-          --header "X-GitHub-Api-Version: 2022-11-28" | jq -c '.billable.${{ inputs.runs-on }}.job_runs[] | select(.job_id == "${{ env.job_id }}")' | jq .duration_ms)" >> $GITHUB_ENV
+          --header "content-type: application/json" | jq -c '.billable.${{ inputs.runs-on }}.job_runs[] | select(.job_id == "${{ env.job_id }}")' | jq .duration_ms)" >> $GITHUB_ENV
           
           source $GITHUB_ENV
           echo "Execution time: $duration_ms"
