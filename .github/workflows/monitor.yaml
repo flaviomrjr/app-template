@@ -1,4 +1,4 @@
-name: New Relic Monitor
+name: Monitor Jobs Execution Time
 
 on:
   workflow_call:
@@ -65,7 +65,7 @@ jobs:
           source $GITHUB_ENV
           echo "Execution time converted: $duration"
 
-      - name: Send execution time
+      - name: Send execution time to New Relic
         id: newrelic-metric
         uses: barecheck/newrelic-metric-action@v0.2-beta.1
         with:
