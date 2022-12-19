@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       job-name:
-        description: 'Job name to monitor'
+        description: 'Job Name to Monitor'
         required: true
         type: string
       runs-on:
