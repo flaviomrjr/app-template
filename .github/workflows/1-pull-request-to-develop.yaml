@@ -6,12 +6,12 @@ on:
       - "feature**"
   
 jobs:
-  unit-tests:
-    uses: ./.github/workflows/test.yaml
-    with:
-      environment: dev
-      node-version: '16.x'
-    secrets: inherit
+  #unit-tests:
+  #  uses: ./.github/workflows/test.yaml
+  #  with:
+  #    environment: dev
+  #    node-version: '16.x'
+  #  secrets: inherit
 
   code-scan:
     uses: ./.github/workflows/sonarqube.yaml
