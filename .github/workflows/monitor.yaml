@@ -49,13 +49,14 @@ jobs:
             echo "Duration MS: $duration_ms"
           fi
 
+          source $GITHUB_ENV
           duration_sec=$duration_ms/1000
 
-          echo "duration=$(local totalSeconds=$duration_sec;
-          local seconds=$((totalSeconds%60));
-          local minutes=$((totalSeconds/60%60));
-          local hours=$((totalSeconds/60/60%24));
-          local days=$((totalSeconds/60/60/24));
+          echo "duration=$(totalSeconds=$duration_sec;
+          seconds=$((totalSeconds%60));
+          minutes=$((totalSeconds/60%60));
+          hours=$((totalSeconds/60/60%24));
+          days=$((totalSeconds/60/60/24));
           (( $days > 0 )) && printf '%dd'$days;
           (( $hours > 0 )) && printf '%dh' $hours;
           (( $minutes > 0 )) && printf '%dm' $minutes;
