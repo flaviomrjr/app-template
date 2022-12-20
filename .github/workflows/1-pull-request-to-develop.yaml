@@ -37,4 +37,5 @@ jobs:
     with:
       app: app-template
       job-name: code-scan / Scan
+      env: prod
     secrets: inherit

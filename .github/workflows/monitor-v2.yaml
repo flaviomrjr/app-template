@@ -11,6 +11,10 @@ on:
         description: 'Job Name to Monitor'
         required: true
         type: string
+      env:
+        description: 'Environment'
+        required: true
+        type: string
       runs-on:
         required: false
         type: string
@@ -56,7 +60,8 @@ jobs:
               --arg value "${{ env.duration }}" \
               --arg timestamp "${timestamp}" \
               --arg app "${{ inputs.app }}" \
-          '{eventType: "Barecheck", metric: $metric, value: $value, application: $app, timestamp: $timestamp}' )
+              --arg env "${{ inputs.env }}" \
+          '{eventType: "Barecheck", metric: $metric, value: $value, application: $app, timestamp: $timestamp, environment: $env}' )
 
           echo "Sending Events..."
           echo $JSON_STRING
