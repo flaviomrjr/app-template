@@ -48,6 +48,7 @@ jobs:
           echo "duration_sec=$(echo $duration_sec | sed 's/s//')" >> $GITHUB_ENV
           
           source $GITHUB_ENV
+          echo "Execution time: $duration_sec"
           echo "duration=$(totalSeconds=$duration_sec;
           seconds=$((totalSeconds%60));
           minutes=$((totalSeconds/60%60));
