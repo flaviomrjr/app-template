@@ -59,7 +59,6 @@ jobs:
           (( $days > 0 || $hours > 0 || $minutes > 0 )) && printf '%ds' $seconds;)" >> $GITHUB_ENV
 
           source $GITHUB_ENV
-          echo "Duration: $duration"
           if [ -z "$duration" ]; then 
             echo "duration=$duration_sec" >> $GITHUB_ENV
           fi
