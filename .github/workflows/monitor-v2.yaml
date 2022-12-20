@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Configure datediff
         run: |
-          apt install dateutils
+          apt install dateutils -y
 
       - name: Get Job Execution time
         run: |
