@@ -60,7 +60,7 @@ jobs:
 
           source $GITHUB_ENV
           echo "Duration: $duration"
-          if [ -z "${{ env.duration }}" ]; then 
+          if [ -z "$duration" ]; then 
             echo "duration=$duration_sec" >> $GITHUB_ENV
             echo "estou no if"
           fi
