@@ -61,7 +61,6 @@ jobs:
           source $GITHUB_ENV
           if [ -z ${{ env.duration }} ]; then 
             echo "duration=$duration_sec" >> $GITHUB_ENV
-            echo "estou no if"
           fi
           
           source $GITHUB_ENV
