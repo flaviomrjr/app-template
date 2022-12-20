@@ -59,12 +59,12 @@ jobs:
           (( $days > 0 || $hours > 0 || $minutes > 0 )) && printf '%ds' $seconds;)" >> $GITHUB_ENV
 
           source $GITHUB_ENV
+          echo "Duration: $duration"
           if [ ${{ env.duration }} == "" ]; then 
             echo "duration=$duration_sec" >> $GITHUB_ENV
             echo "estou no if"
           fi
-          
-          
+
           source $GITHUB_ENV
           echo "Execution time: $duration"
 
