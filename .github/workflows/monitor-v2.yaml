@@ -21,6 +21,10 @@ jobs:
     name: Monitor Execution Time
     runs-on: ${{ inputs.runs-on }}
     steps:
+      - name: Configure datediff
+        run: |
+          apt install dateutils
+
       - name: Get Job Execution time
         run: |
           echo "job_started_at=$(curl \
