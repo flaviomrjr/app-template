@@ -45,12 +45,32 @@ jobs:
           echo "Execution time: $duration"
 
       - name: Send execution time to New Relic
-        id: newrelic-metric
-        uses: barecheck/newrelic-metric-action@v0.2-beta.1
-        with:
-          insertApiKey: ${{ secrets.NEW_RELIC_INSERT_API_KEY }}
-          accountId: ${{ secrets.NEW_RELIC_ACCOUNT_ID }}
-          region: US
-          application: ${{ inputs.app }}
-          metricName: ${{ inputs.job-name }}
-          metricValue: ${{ env.duration }}
+        run: |
+          API_HOST=https://insights-collector.newrelic.com
+          API_ENDPOINT=$API_HOST/v1/accounts/${{ secrets.NEW_RELIC_ACCOUNT_ID }}/events
+
+          timestamp=$(date +%s)
+
+          JSON_STRING=$( jq -n \
+              --arg metric "${{ inputs.job-name }}" \
+              --arg value "${{ env.duration }}" \
+              --arg timestamp "${timestamp}" \
+              --arg app "${{ inputs.app }}" \
+          '{eventType: "Barecheck", metric: $metric, value: $value, application: $app, timestamp: $timestamp}' )
+
+          echo "Sending Events..."
+          echo $JSON_STRING
+
+          result=$(echo $JSON_STRING  | gzip -c | \
+              curl -vvv --data-binary @- -X POST \
+              -H "Content-Type: application/json"\
+              -H "X-Insert-Key: ${{ secrets.NEW_RELIC_INSERT_API_KEY }}" \
+              -H "Content-Encoding: gzip" \
+              $API_ENDPOINT
+          )
+
+          exitStatus=$?
+
+          if [ $exitStatus -ne 0 ]; then
+              echo "::error:: $result"
+          fi
