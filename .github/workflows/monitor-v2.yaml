@@ -42,8 +42,18 @@ jobs:
           --header "content-type: application/json" | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .completed_at)" >> $GITHUB_ENV
 
           source $GITHUB_ENV
+          echo "duration_sec=$(/usr/bin/dateutils.ddiff -i '%Y-%m-%dT%H:%M:%SZ' $job_started_at $job_completed_at -f %S)" >> $GITHUB_ENV
 
-          echo "duration=$(/usr/bin/dateutils.ddiff -i '%Y-%m-%dT%H:%M:%SZ' $job_started_at $job_completed_at)" >> $GITHUB_ENV
+          source $GITHUB_ENV
+          echo "duration=$(totalSeconds=$duration_sec;
+          seconds=$((totalSeconds%60));
+          minutes=$((totalSeconds/60%60));
+          hours=$((totalSeconds/60/60%24));
+          days=$((totalSeconds/60/60/24));
+          (( $days > 0 )) && printf '%dd'$days;
+          (( $hours > 0 )) && printf '%dh' $hours;
+          (( $minutes > 0 )) && printf '%dm' $minutes;
+          (( $days > 0 || $hours > 0 || $minutes > 0 )) && printf '%ds' $seconds;)" >> $GITHUB_ENV
           
           source $GITHUB_ENV
           echo "Execution time: $duration"
