@@ -62,7 +62,6 @@ jobs:
           echo "Duration: $duration"
           if [ -z "$duration" ]; then 
             echo "duration=$duration_sec" >> $GITHUB_ENV
-            echo "estou no if"
           fi
 
           source $GITHUB_ENV
