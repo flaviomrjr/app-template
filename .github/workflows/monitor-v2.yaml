@@ -61,7 +61,9 @@ jobs:
           source $GITHUB_ENV
           if [ ${{ env.duration }} == "" ]; then 
             echo "duration=$duration_sec" >> $GITHUB_ENV
+            echo "estou no if"
           fi
+          
           
           source $GITHUB_ENV
           echo "Execution time: $duration"
