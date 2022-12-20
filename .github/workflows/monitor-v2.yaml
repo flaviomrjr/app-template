@@ -22,7 +22,7 @@ on:
 
 jobs:
   monitor:
-    name: monitor-execution-time
+    name: execution-time
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Set up datediff
