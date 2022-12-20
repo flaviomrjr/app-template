@@ -1,0 +1,52 @@
+name: Monitor Jobs Execution Time
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: 'Application'
+        required: true
+        type: string
+      job-name:
+        description: 'Job Name to Monitor'
+        required: true
+        type: string
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  monitor:
+    name: Monitor Execution Time
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Get Job Execution time
+        run: |
+          echo "job_started_at=$(curl \
+          --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+          --header "Authorization: Bearer ${{ github.token }}" \
+          --header "content-type: application/json" | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .started_at)" >> $GITHUB_ENV
+
+          echo "job_completed_at=$(curl \
+          --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+          --header "Authorization: Bearer ${{ github.token }}" \
+          --header "content-type: application/json" | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .completed_at)" >> $GITHUB_ENV
+
+          source $GITHUB_ENV
+
+          echo "duration=$(datediff -i '%Y-%m-%dT%H:%M:%SZ' $job_started_at $job_completed_at)" >> $GITHUB_ENV
+          
+          source $GITHUB_ENV
+          echo "Execution time: $duration"
+
+      - name: Send execution time to New Relic
+        id: newrelic-metric
+        uses: barecheck/newrelic-metric-action@v0.2-beta.1
+        with:
+          insertApiKey: ${{ secrets.NEW_RELIC_INSERT_API_KEY }}
+          accountId: ${{ secrets.NEW_RELIC_ACCOUNT_ID }}
+          region: US
+          application: ${{ inputs.app }}
+          metricName: ${{ inputs.job-name }}
+          metricValue: ${{ env.duration }}
