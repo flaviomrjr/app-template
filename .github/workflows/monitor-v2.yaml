@@ -21,12 +21,10 @@ jobs:
     name: Monitor Execution Time
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - name: Configure datediff
-        run: |
-          sudo apt install dateutils -y
-
       - name: Get Job Execution time
         run: |
+          sudo apt install dateutils -y
+        
           echo "job_started_at=$(curl \
           --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
           --header "Authorization: Bearer ${{ github.token }}" \
@@ -39,6 +37,7 @@ jobs:
 
           source $GITHUB_ENV
 
+          echo "duration=$(datediff -i '%Y-%m-%dT%H:%M:%SZ' $job_started_at $job_completed_at)" >> $GITHUB_ENV
           echo "duration=$(ddiff -i '%Y-%m-%dT%H:%M:%SZ' $job_started_at $job_completed_at)" >> $GITHUB_ENV
           
           source $GITHUB_ENV
