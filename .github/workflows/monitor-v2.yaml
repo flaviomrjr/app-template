@@ -48,10 +48,12 @@ jobs:
           echo "duration_sec_time=$(echo $duration_sec | sed 's/s//')" >> $GITHUB_ENV
 
           source $GITHUB_ENV
+          echo "$duration_sec"
+          echo "$duration_sec_time"
           if [ ${{ env.duration_sec_time }} < 60 ]; then
-            echo "duration=$duration_sec" >> $GITHUB_ENV
+            echo "duration=${{ env.duration_sec }}" >> $GITHUB_ENV
           else
-            echo "duration=$(totalSeconds=$duration_sec_time;
+            echo "duration=$(totalSeconds=${{ env.duration_sec_time }};
             seconds=$((totalSeconds%60));
             minutes=$((totalSeconds/60%60));
             hours=$((totalSeconds/60/60%24));
