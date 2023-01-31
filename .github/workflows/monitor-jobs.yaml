@@ -1,0 +1,98 @@
+name: Monitor GitHub Jobs
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: "Application"
+        required: true
+        type: string
+      job-name:
+        description: "Job Name to Monitor"
+        required: true
+        type: string
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  monitor:
+    name: execution-time
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Set Environment
+        run: |
+          if [[ "${{ github.ref_name }}" =~ ^(main|master|prod)$ ]]; then
+            echo "environment=prod" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+            echo "environment=staging" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "qa" ]]; then
+            echo "environment=qa" >> $GITHUB_ENV
+          else
+            echo "environment=dev" >> $GITHUB_ENV
+          fi
+
+          source $GITHUB_ENV
+          echo "Environment: $environment"
+
+      - name: Set up datediff
+        run: |
+          sudo apt install dateutils -y
+
+      - name: Get Job Execution time
+        run: |
+          echo "job_started_at=$(curl \
+          --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+          --header "Authorization: Bearer ${{ github.token }}" \
+          --header "content-type: application/json" | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .started_at)" >> $GITHUB_ENV
+
+          echo "job_completed_at=$(curl \
+          --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+          --header "Authorization: Bearer ${{ github.token }}" \
+          --header "content-type: application/json" | jq -c '.jobs[] | select(.name == "${{ inputs.job-name }}")' | jq .completed_at)" >> $GITHUB_ENV
+
+          source $GITHUB_ENV
+          echo "duration_sec=$(/usr/bin/dateutils.ddiff -i '%Y-%m-%dT%H:%M:%SZ' $job_started_at $job_completed_at)" >> $GITHUB_ENV
+
+          source $GITHUB_ENV
+          echo "duration=$(echo $duration_sec | tr -dc '0-9')" >> $GITHUB_ENV
+
+          source $GITHUB_ENV
+          echo "Execution time: $duration"
+
+      - name: Send execution time to New Relic
+        run: |
+          API_HOST=https://insights-collector.newrelic.com
+          API_ENDPOINT=$API_HOST/v1/accounts/${{ secrets.NEW_RELIC_ACCOUNT_ID }}/events
+
+          timestamp=$(date +%s)
+
+          JSON_STRING=$( jq -n \
+              --arg job "${{ inputs.job-name }}" \
+              --arg execution_time "${{ env.duration }}" \
+              --arg timestamp "${timestamp}" \
+              --arg app "${{ inputs.app }}" \
+              --arg env "${{ env.environment }}" \
+              --arg job_started_at "${{ env.job_started_at }}" \
+              --arg job_completed_at "${{ env.job_completed_at }}" \
+          '{eventType: "Pipeline", application: $app, job: $job, execution_time: $execution_time, environment: $env, job_started_at: $job_started_at, job_completed_at: $job_completed_at, timestamp: $timestamp}' )
+
+          echo "Sending Events..."
+          echo $JSON_STRING
+
+          result=$(echo $JSON_STRING  | gzip -c | \
+              curl -vvv --data-binary @- -X POST \
+              -H "Content-Type: application/json"\
+              -H "X-Insert-Key: ${{ secrets.NEW_RELIC_INSERT_API_KEY }}" \
+              -H "Content-Encoding: gzip" \
+              $API_ENDPOINT
+          )
+
+          if [ "$result" == "{}" ]; then
+              echo "O envio da métrica falhou: error $result"
+              exit 1
+          else
+              echo "Request: $result"
+              exit 0
+          fi
