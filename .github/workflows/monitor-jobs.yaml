@@ -23,11 +23,11 @@ jobs:
     steps:
       - name: Set Environment
         run: |
-          if [ "${{ github.ref_name }}" =~ ^(main|master|prod)$ ]; then
+          if [[ "${{ github.ref_name }}" =~ ^(main|master|prod)$ ]]; then
             echo "environment=prod" >> $GITHUB_ENV
-          elif [ "${{ github.ref_name }}" == "staging" ]; then
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
             echo "environment=staging" >> $GITHUB_ENV
-          elif [ "${{ github.ref_name }}" == "qa" ]; then
+          elif [[ "${{ github.ref_name }}" == "qa" ]]; then
             echo "environment=qa" >> $GITHUB_ENV
           else
             echo "environment=dev" >> $GITHUB_ENV
