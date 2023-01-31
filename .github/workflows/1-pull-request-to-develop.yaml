@@ -31,11 +31,10 @@ jobs:
   #  secrets: inherit
 
   monitor:
-    uses: ./.github/workflows/monitor-v2.yaml
+    uses: ./.github/workflows/monitor-jobs.yaml
     needs:
       - code-scan
     with:
       app: app-template
       job-name: code-scan / Scan
-      env: prod
     secrets: inherit

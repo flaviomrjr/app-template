@@ -1,18 +1,14 @@
-name: Monitor Jobs Execution Time
+name: Monitor GitHub Jobs
 
 on:
   workflow_call:
     inputs:
       app:
-        description: 'Application'
+        description: "Application"
         required: true
         type: string
       job-name:
-        description: 'Job Name to Monitor'
-        required: true
-        type: string
-      env:
-        description: 'Environment'
+        description: "Job Name to Monitor"
         required: true
         type: string
       runs-on:
@@ -25,12 +21,24 @@ jobs:
     name: execution-time
     runs-on: ${{ inputs.runs-on }}
     steps:
+      - name: Set Environment
+        run: |
+          if [ "${{ github.ref_name }}" =~ ^(main|master|prod)$ ]; then
+            echo "environment=prod" >> $GITHUB_ENV
+          elif [ "${{ github.ref_name }}" == "staging" ]; then
+            echo "environment=staging" >> $GITHUB_ENV
+          elif [ "${{ github.ref_name }}" == "qa" ]; then
+            echo "environment=qa" >> $GITHUB_ENV
+          else
+            echo "environment=dev" >> $GITHUB_ENV
+          fi
+
       - name: Set up datediff
         run: |
           sudo apt install dateutils -y
-      
+
       - name: Get Job Execution time
-        run: |        
+        run: |
           echo "job_started_at=$(curl \
           --url https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
           --header "Authorization: Bearer ${{ github.token }}" \
@@ -45,23 +53,7 @@ jobs:
           echo "duration_sec=$(/usr/bin/dateutils.ddiff -i '%Y-%m-%dT%H:%M:%SZ' $job_started_at $job_completed_at)" >> $GITHUB_ENV
 
           source $GITHUB_ENV
-          echo "duration_sec_number=$(echo $duration_sec | tr -dc '0-9')" >> $GITHUB_ENV
-
-          source $GITHUB_ENV
-          echo "duration=$(totalSeconds=$duration_sec_number;
-          seconds=$((totalSeconds%60));
-          minutes=$((totalSeconds/60%60));
-          hours=$((totalSeconds/60/60%24));
-          days=$((totalSeconds/60/60/24));
-          (( $days > 0 )) && printf '%dd'$days;
-          (( $hours > 0 )) && printf '%dh' $hours;
-          (( $minutes > 0 )) && printf '%dm' $minutes;
-          (( $days > 0 || $hours > 0 || $minutes > 0 )) && printf '%ds' $seconds;)" >> $GITHUB_ENV
-
-          source $GITHUB_ENV
-          if [ -z "$duration" ]; then 
-            echo "duration=$duration_sec" >> $GITHUB_ENV
-          fi
+          echo "duration=$(echo $duration_sec | tr -dc '0-9')" >> $GITHUB_ENV
 
           source $GITHUB_ENV
           echo "Execution time: $duration"
@@ -74,12 +66,14 @@ jobs:
           timestamp=$(date +%s)
 
           JSON_STRING=$( jq -n \
-              --arg metric "${{ inputs.job-name }}" \
-              --arg value "${{ env.duration }}" \
+              --arg job "${{ inputs.job-name }}" \
+              --arg execution_time "${{ env.duration }}" \
               --arg timestamp "${timestamp}" \
               --arg app "${{ inputs.app }}" \
-              --arg env "${{ inputs.env }}" \
-          '{eventType: "Barecheck", metric: $metric, value: $value, application: $app, timestamp: $timestamp, environment: $env}' )
+              --arg env "${{ env.environment }}" \
+              --arg job_started_at "${{ env.job_started_at }}" \
+              --arg job_completed_at "${{ env.job_completed_at }}" \
+          '{eventType: "Pipeline", application: $app, job: $job, execution_time: $execution_time, environment: $env, job_started_at: $job_started_at, job_completed_at: $job_completed_at, timestamp: $timestamp}' )
 
           echo "Sending Events..."
           echo $JSON_STRING
@@ -92,8 +86,10 @@ jobs:
               $API_ENDPOINT
           )
 
-          exitStatus=$?
-
-          if [ $exitStatus -ne 0 ]; then
-              echo "::error:: $result"
+          if [ "$result" == "{}" ]; then
+              echo "O envio da métrica falhou: error $result"
+              exit 1
+          else
+              echo "Request: $result"
+              exit 0
           fi
