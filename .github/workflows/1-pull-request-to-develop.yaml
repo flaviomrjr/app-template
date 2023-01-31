@@ -8,8 +8,6 @@ on:
 jobs:
   code-scan:
     uses: ./.github/workflows/sonarqube.yaml
-    needs:
-      - unit-tests
     with:
       environment: feature
     secrets: inherit
