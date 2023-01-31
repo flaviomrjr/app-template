@@ -33,6 +33,9 @@ jobs:
             echo "environment=dev" >> $GITHUB_ENV
           fi
 
+          source $GITHUB_ENV
+          echo "Environment: $environment"
+
       - name: Set up datediff
         run: |
           sudo apt install dateutils -y
