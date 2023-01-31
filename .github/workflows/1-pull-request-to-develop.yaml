@@ -6,35 +6,35 @@ on:
       - "feature**"
   
 jobs:
-  #unit-tests:
-  #  uses: ./.github/workflows/test.yaml
-  #  with:
-  #    environment: dev
-  #    node-version: '16.x'
-  #  secrets: inherit
+  unit-tests:
+    uses: ./.github/workflows/test.yaml
+    with:
+      environment: dev
+      node-version: '16.x'
+    secrets: inherit
 
   code-scan:
     uses: ./.github/workflows/sonarqube.yaml
-    #needs:
-    #  - unit-tests
+    needs:
+      - unit-tests
     with:
       environment: feature
     secrets: inherit
-#
-  #open-pr-to-develop:
-  #  uses: ./.github/workflows/create-pull-request.yaml
-  #  needs:
-  #    - unit-tests
-  #    - code-scan
-  #  with:
-  #    target-branch: develop
-  #  secrets: inherit
 
-  monitor:
-    uses: ./.github/workflows/monitor-jobs.yaml
+  open-pr-to-develop:
+    uses: ./.github/workflows/create-pull-request.yaml
     needs:
+      - unit-tests
       - code-scan
     with:
-      app: app-template
-      job-name: code-scan / Scan
+      target-branch: develop
     secrets: inherit
+
+  #monitor:
+  #  uses: ./.github/workflows/monitor-jobs.yaml
+  #  needs:
+  #    - code-scan
+  #  with:
+  #    app: app-template
+  #    job-name: code-scan / Scan
+  #  secrets: inherit
